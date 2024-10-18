@@ -6,6 +6,7 @@ public class GachaVillain {
     private int eattack;        // villain's attack points
     private int edefense;       // villain's defense points
     private int espeed;         // villain's speed points
+    private int originalHp;
 
     // constructor
     public GachaVillain(String ename, int erarity, int ehp, int eattack, int edefense, int espeed) {
@@ -15,6 +16,7 @@ public class GachaVillain {
         this.eattack = eattack;  // initialize attack points
         this.edefense = edefense; // initialize defense points
         this.espeed = espeed;    // initialize speed points
+        this.originalHp = ehp;
     }
 
     // setters
@@ -77,6 +79,10 @@ public class GachaVillain {
     // this method gets the villain's speed points
     public int getEspeed() {
         return espeed;
+    }
+
+    public int getOriginalHp() {
+        return originalHp;
     }
 
     // method to print villain details

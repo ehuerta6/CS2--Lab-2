@@ -7,6 +7,7 @@ public class GachaHero {
     private int espeed;
     private int eluck;
     private int emp;
+    private int originalHp;
 
     // constructor
     public GachaHero(String ename, int erarity, int ehp, int eattack, int edefense, int espeed, int emp, int eluck) {
@@ -18,6 +19,7 @@ public class GachaHero {
         this.espeed = espeed;
         this.emp = emp;
         this.eluck = eluck;
+        this.originalHp = ehp;
     }
 
     // setters
@@ -84,6 +86,10 @@ public class GachaHero {
 
     public int getEluck() {
         return eluck;
+    }
+
+    public int getOriginalHp() {
+        return originalHp;
     }
 
     // method to print the hero's details
