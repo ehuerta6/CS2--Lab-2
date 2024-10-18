@@ -58,6 +58,9 @@ public class GachaGameBoard {
     private static int drawChances = 1; // Add this line to track draw chances
     private static int runChances = 1; // Add this line to track run chances
 
+    // Add this new class variable to track consecutive victories
+    private static int consecutiveVictories = 0;
+
     private static void log(String message) {
         String timestamp = timeFormat.format(new Date());
         String logMessage = "[" + timestamp + "] " + message;
@@ -688,6 +691,27 @@ public class GachaGameBoard {
             SwingUtilities.invokeLater(() -> cardLayout.show(mainPanel, "mainMenu"));
         } else if (!lives[1]) {
             villainsDefeated++;
+            consecutiveVictories++;
+            
+            // Determine heal percentage based on consecutive victories
+            double healPercentage = 0.05; // Default 5% heal
+            if (consecutiveVictories % 10 == 0) {
+                healPercentage = 0.25; // 25% heal for every 10th victory
+                showConsecutiveVictoryDialog(10, 25);
+            } else if (consecutiveVictories % 5 == 0) {
+                healPercentage = 0.10; // 10% heal for every 5th victory (not divisible by 10)
+                showConsecutiveVictoryDialog(5, 10);
+            }
+            
+            int healAmount = (int)(currentGachaHero.getOriginalHp() * healPercentage);
+            int newHp = Math.min(currentGachaHero.getEhp() + healAmount, currentGachaHero.getOriginalHp());
+            int actualHealAmount = newHp - currentGachaHero.getEhp();
+            currentGachaHero.setEhp(newHp);
+            
+            log(currentGachaHero.getEname() + " recovered " + actualHealAmount + " HP (" + (int)(healPercentage * 100) + "%) after defeating the villain!");
+            log(currentGachaHero.getEname() + " HP: " + currentGachaHero.getEhp() + "/" + currentGachaHero.getOriginalHp());
+            log("Consecutive victories: " + consecutiveVictories);
+            
             showVictoryScreen();
             currentGachaVillain = gachaVillainArray[gachaPoolVillain.singleDraw()];
             resetCharacterHP(currentGachaVillain);
@@ -698,6 +722,37 @@ public class GachaGameBoard {
         } else {
             refreshBattleMenu();
         }
+    }
+
+    private static void showConsecutiveVictoryDialog(int victories, int healPercentage) {
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBackground(new Color(30, 30, 70));
+        panel.setPreferredSize(new Dimension(400, 250));
+        panel.setBorder(BorderFactory.createLineBorder(new Color(255, 215, 0), 3)); // Gold border
+
+        JLabel titleLabel = new JLabel("Consecutive Victory Bonus!");
+        titleLabel.setForeground(new Color(255, 215, 0)); // Gold color
+        titleLabel.setHorizontalAlignment(JLabel.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        panel.add(titleLabel, BorderLayout.NORTH);
+
+        JLabel messageLabel = new JLabel("<html><center>Congratulations!<br><br>" +
+                victories + " wins in a row!<br><br>" +
+                "You receive " + healPercentage + "% of your health back!</center></html>");
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setHorizontalAlignment(JLabel.CENTER);
+        messageLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        panel.add(messageLabel, BorderLayout.CENTER);
+
+        // Add a trophy icon
+        ImageIcon trophyIcon = new ImageIcon("trophy.png"); // Make sure you have this image in your project directory
+        if (trophyIcon.getImageLoadStatus() == MediaTracker.COMPLETE) {
+            Image scaledImage = trophyIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+            JLabel iconLabel = new JLabel(new ImageIcon(scaledImage));
+            panel.add(iconLabel, BorderLayout.WEST);
+        }
+
+        JOptionPane.showMessageDialog(mainFrame, panel, "Consecutive Victory Bonus", JOptionPane.PLAIN_MESSAGE);
     }
 
     private static void showNoChancesDialog(String action, String actionDescription) {
@@ -803,7 +858,7 @@ public class GachaGameBoard {
             cardLayout.show(mainPanel, "battleMenu");
         });
 
-        instructionsButton.addActionListener(e -> showInstructions());
+        instructionsButton.addActionListener(e -> showHowToPlayDialog());
 
         exitButton.addActionListener(e -> showExitGameDialog());
 
@@ -821,37 +876,83 @@ public class GachaGameBoard {
         return button;
     }
 
-    private static void showInstructions() {
-        String instructions = 
-            "Welcome to Gacha Game!\n\n" +
-            "1. Start the game by clicking 'Start Game'.\n" +
-            "2. You'll be assigned a random hero to battle with.\n" +
-            "3. In battle, you can choose to:\n" +
-            "   - Attack: Deal damage to the villain\n" +
-            "   - Defend: Increase your defense for one turn\n" +
-            "   - Draw New Hero: Replace your current hero\n" +
-            "   - Run: Attempt to escape the battle\n" +
-            "4. Defeat villains to win, but be careful not to let your hero's HP reach 0!\n" +
-            "5. Have fun and may the gacha odds be ever in your favor!";
+    private static void showHowToPlayDialog() {
+        JPanel mainPanel = new JPanel(new BorderLayout(20, 20)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g.create();
+                int w = getWidth();
+                int h = getHeight();
+                GradientPaint gp = new GradientPaint(0, 0, new Color(30, 30, 70), w, h, new Color(60, 60, 120));
+                g2d.setPaint(gp);
+                g2d.fillRect(0, 0, w, h);
+                g2d.dispose();
+            }
+        };
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JTextArea textArea = new JTextArea(instructions);
-        textArea.setEditable(false);
-        textArea.setWrapStyleWord(true);
-        textArea.setLineWrap(true);
-        textArea.setOpaque(false);
-        textArea.setForeground(Color.WHITE);
-        textArea.setFont(new Font("Arial", Font.PLAIN, 16));
+        JLabel titleLabel = new JLabel("How to Play");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        titleLabel.setForeground(new Color(255, 215, 0)); // Gold color
+        titleLabel.setHorizontalAlignment(JLabel.CENTER);
+        mainPanel.add(titleLabel, BorderLayout.NORTH);
 
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setPreferredSize(new Dimension(400, 300));
-        scrollPane.getViewport().setOpaque(false);
+        JPanel contentPanel = new JPanel(new GridBagLayout());
+        contentPanel.setOpaque(false);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 15, 10, 15);
+
+        String[] instructions = {
+            "1. Draw a hero to start the game.",
+            "2. Face villains in turn-based combat.",
+            "3. Use 'Attack' to deal damage to the villain.",
+            "4. Use 'Defend' to reduce incoming damage and counter-attack.",
+            "5. Use 'Draw New Hero' to switch your current hero (limited uses).",
+            "6. Use 'Run' to attempt escaping the battle (limited uses).",
+            "7. Defeat villains to progress and earn healing bonuses.",
+            "8. Every 5 victories: Heal 10% of max HP.",
+            "9. Every 10 victories: Heal 25% of max HP.",
+            "10. Aim for the highest streak of victories!"
+        };
+
+        for (String instruction : instructions) {
+            JLabel label = new JLabel(instruction);
+            label.setFont(new Font("Arial", Font.PLAIN, 16));
+            label.setForeground(Color.WHITE);
+            contentPanel.add(label, gbc);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(255, 215, 0), 2));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(30, 30, 70));
-        panel.add(scrollPane, BorderLayout.CENTER);
+        JButton closeButton = new JButton("Got it!");
+        closeButton.setFont(new Font("Arial", Font.BOLD, 18));
+        closeButton.setBackground(new Color(255, 215, 0));
+        closeButton.setForeground(new Color(30, 30, 70));
+        closeButton.setFocusPainted(false);
+        closeButton.setBorder(BorderFactory.createRaisedBevelBorder());
+        closeButton.setPreferredSize(new Dimension(120, 40));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setOpaque(false);
+        buttonPanel.add(closeButton);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        JOptionPane.showMessageDialog(mainFrame, panel, "How to Play", JOptionPane.PLAIN_MESSAGE);
+        JDialog dialog = new JDialog(mainFrame, "How to Play", true);
+        dialog.setContentPane(mainPanel);
+        dialog.setSize(500, 600);
+        dialog.setLocationRelativeTo(mainFrame);
+
+        closeButton.addActionListener(e -> dialog.dispose());
+
+        dialog.setVisible(true);
     }
 
     public static void main(String[] args) {
@@ -877,6 +978,7 @@ public class GachaGameBoard {
             log(currentGachaHero.getEname() + " successfully escaped from " + currentGachaVillain.getEname() + "!");
             showEscapeSuccessScreen();
             runChances--;
+            consecutiveVictories = 0; // Reset consecutive victories on successful escape
             resetGameState();
             SwingUtilities.invokeLater(() -> cardLayout.show(mainPanel, "mainMenu"));
         } else {
@@ -1141,9 +1243,10 @@ public class GachaGameBoard {
         currentGachaHero = null;
         currentGachaVillain = null;
         villainsDefeated = 0;
+        consecutiveVictories = 0; // Reset consecutive victories
         drawChances = 1;
         runChances = 1;
-        battleLog = new StringBuilder(); // Reset the battle log
+        battleLog = new StringBuilder();
         if (battleLogArea != null) {
             battleLogArea.setText("");
         }
