@@ -5,6 +5,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class GachaGameBoard {
     public static GachaHero currentGachaHero;
@@ -19,6 +21,19 @@ public class GachaGameBoard {
     private static int randomFactorIndex = 0; // this variable tracks the index for cycling through random factors
     private static final int[] criticalHits = {1, 2}; // this array holds predefined critical hit values (1 or 2)
     private static final int[] randomFactors = {0, 1, 2}; // this array holds predefined random factors (0, 1, or 2)
+
+    private static final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+
+    private static void log(String message) {
+        String timestamp = timeFormat.format(new Date());
+        System.out.println("[" + timestamp + "] " + message);
+        System.out.println("----------------------------------------");
+    }
+
+    private static void showMessageDialog(String message) {
+        JOptionPane.showMessageDialog(null, message, "Action Result", JOptionPane.INFORMATION_MESSAGE);
+        log(message);
+    }
 
     // this method reads hero data from the CSV file and creates an array of GachaHero objects
     public static GachaHero[] scanHero() {
@@ -141,10 +156,11 @@ public class GachaGameBoard {
 
         // this block handles the scenario when the hero's speed is greater than the villain's
         if (currentGachaHero.getEspeed() > currentGachaVillain.getEspeed()) {
+            log("Attack Sequence: Hero attacks first");
             int heroDamage = calculateDamage(currentGachaHero.getErarity(), currentGachaHero.getEattack(), currentGachaHero.getEluck(), currentGachaHero.getEspeed(), currentGachaVillain.getEdefense(), true);
             currentGachaVillain.setEhp(currentGachaVillain.getEhp() - heroDamage); // apply the hero's damage to the villain
 
-            System.out.println(currentGachaHero.getEname() + " dealt " + heroDamage + " damage to " + currentGachaVillain.getEname());
+            log(currentGachaHero.getEname() + " dealt " + heroDamage + " damage to " + currentGachaVillain.getEname());
 
             // check if the villain is defeated
             if (currentGachaVillain.getEhp() <= 0) {
@@ -156,7 +172,7 @@ public class GachaGameBoard {
             int villainDamage = calculateDamage(currentGachaVillain.getErarity(), currentGachaVillain.getEattack() / 2, 3, currentGachaVillain.getEspeed(), currentGachaHero.getEdefense(), false);
             currentGachaHero.setEhp(currentGachaHero.getEhp() - villainDamage); // apply the villain's damage to the hero
 
-            System.out.println(currentGachaVillain.getEname() + " dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
+            log(currentGachaVillain.getEname() + " dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
 
             // check if the hero is defeated
             if (currentGachaHero.getEhp() <= 0) {
@@ -164,11 +180,12 @@ public class GachaGameBoard {
                 return lives;
             }
         } else {
+            log("Attack Sequence: Villain attacks first");
             // this block handles the scenario when the villain's speed is greater or equal
             int villainDamage = calculateDamage(currentGachaVillain.getErarity(), currentGachaVillain.getEattack() / 2, 3, currentGachaVillain.getEspeed(), currentGachaHero.getEdefense(), false);
             currentGachaHero.setEhp(currentGachaHero.getEhp() - villainDamage);
 
-            System.out.println(currentGachaVillain.getEname() + " dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
+            log(currentGachaVillain.getEname() + " dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
 
             if (currentGachaHero.getEhp() <= 0) {
                 lives[0] = false;
@@ -179,7 +196,7 @@ public class GachaGameBoard {
             int heroDamage = calculateDamage(currentGachaHero.getErarity(), currentGachaHero.getEattack(), currentGachaHero.getEluck(), currentGachaHero.getEspeed(), currentGachaVillain.getEdefense(), true);
             currentGachaVillain.setEhp(currentGachaVillain.getEhp() - heroDamage);
 
-            System.out.println(currentGachaHero.getEname() + " dealt " + heroDamage + " damage to " + currentGachaVillain.getEname());
+            log(currentGachaHero.getEname() + " dealt " + heroDamage + " damage to " + currentGachaVillain.getEname());
 
             if (currentGachaVillain.getEhp() <= 0) {
                 lives[1] = false;
@@ -302,9 +319,9 @@ public class GachaGameBoard {
 
     public static JPanel createBattleMenu() {
         if (currentGachaVillain == null || currentGachaVillain.getEhp() <= 0) {
-            System.out.println("Battle was clicked! - Drawing Villain");
+            log("Battle started! Drawing a new villain...");
             currentGachaVillain = gachaVillainArray[gachaPoolVillain.singleDraw()];
-            currentGachaVillain.eprintGachaVillainInfo();
+            log("Villain drawn: " + currentGachaVillain.getEname());
         }
 
         JPanel battleMenu = new JPanel();
@@ -315,58 +332,45 @@ public class GachaGameBoard {
 
         JButton attackButton = new JButton("Attack");
         JButton defendButton = new JButton("Defend");
-        JButton itemButton = new JButton("Use Draw");
+        JButton drawButton = new JButton("Draw New Hero");
         JButton runButton = new JButton("Run");
 
         attackButton.addActionListener(e -> {
+            log("Battle Action: Attack");
             boolean[] outcome = attackSequence();
-            if (!outcome[0]) {
-                System.err.println("The hero is dead");
-                JPanel endingScreen = createEndingScreen();
-                JPanel parentPanel = (JPanel) battleMenu.getParent();
-                parentPanel.add(endingScreen, "endingScreen");
-                ((CardLayout) parentPanel.getLayout()).show(parentPanel, "endingScreen");
-            } else {
-                System.err.println("Refresh the page");
-                refreshBattleMenu((CardLayout) battleMenu.getParent().getLayout(), (JPanel) battleMenu.getParent());
-            }
+            showMessageDialog("You attacked " + currentGachaVillain.getEname() + "!");
+            handleBattleOutcome(outcome, battleMenu);
         });
 
         defendButton.addActionListener(e -> {
-            currentGachaHero.setEdefense(currentGachaHero.getEdefense() * 2);
-            System.out.println(currentGachaHero.getEname() + " doubled their defense for this turn!");
+            log("Battle Action: Defend");
+            int originalDefense = currentGachaHero.getEdefense();
+            currentGachaHero.setEdefense(originalDefense * 2);
+            showMessageDialog(currentGachaHero.getEname() + " doubled their defense for this turn!");
             boolean[] outcome = attackSequence();
-            currentGachaHero.setEdefense(currentGachaHero.getEdefense() / 2);
+            currentGachaHero.setEdefense(originalDefense);
             handleBattleOutcome(outcome, battleMenu);
         });
 
-        itemButton.addActionListener(e -> {
-            System.out.println("You used a Draw!");
-            int healAmount = 50 + (int)(Math.random() * 51); // Random heal between 50-100
-            currentGachaHero.setEhp(currentGachaHero.getEhp() + healAmount);
-            System.out.println(currentGachaHero.getEname() + " healed for " + healAmount + " HP!");
-            boolean[] outcome = attackSequence();
-            handleBattleOutcome(outcome, battleMenu);
+        drawButton.addActionListener(e -> {
+            log("Battle Action: Draw New Hero");
+            currentGachaHero = gachaHeroArray[gachaPoolHero.singleDraw()];
+            showMessageDialog("You drew a new hero: " + currentGachaHero.getEname() + "!");
+            refreshBattleMenu((CardLayout) battleMenu.getParent().getLayout(), (JPanel) battleMenu.getParent());
         });
 
         runButton.addActionListener(e -> {
-            System.out.println("You tried to run away!");
-            if (Math.random() < 0.5) {
-                System.out.println("Escape successful!");
-                JPanel startScreen = createStartScreen();
-                JPanel parentPanel = (JPanel) battleMenu.getParent();
-                parentPanel.add(startScreen, "startScreen");
-                ((CardLayout) parentPanel.getLayout()).show(parentPanel, "startScreen");
-            } else {
-                System.out.println("Escape failed!");
-                boolean[] outcome = attackSequence();
-                handleBattleOutcome(outcome, battleMenu);
-            }
+            log("Battle Action: Run");
+            showMessageDialog("You successfully escaped from " + currentGachaVillain.getEname() + "!");
+            JPanel startScreen = createStartScreen();
+            JPanel parentPanel = (JPanel) battleMenu.getParent();
+            parentPanel.add(startScreen, "startScreen");
+            ((CardLayout) parentPanel.getLayout()).show(parentPanel, "startScreen");
         });
 
         buttonPanel.add(attackButton);
         buttonPanel.add(defendButton);
-        buttonPanel.add(itemButton);
+        buttonPanel.add(drawButton);
         buttonPanel.add(runButton);
 
         battleMenu.add(buttonPanel, BorderLayout.SOUTH);
@@ -404,19 +408,21 @@ public class GachaGameBoard {
 
     private static void handleBattleOutcome(boolean[] outcome, JPanel battleMenu) {
         if (!outcome[0]) {
-            System.err.println("The hero is dead");
+            log("Battle Outcome: Hero Defeated");
+            showMessageDialog("Game Over! " + currentGachaHero.getEname() + " has been defeated.");
             JPanel endingScreen = createEndingScreen();
             JPanel parentPanel = (JPanel) battleMenu.getParent();
             parentPanel.add(endingScreen, "endingScreen");
             ((CardLayout) parentPanel.getLayout()).show(parentPanel, "endingScreen");
         } else if (!outcome[1]) {
-            System.out.println("The villain is defeated!");
+            log("Battle Outcome: Villain Defeated");
+            showMessageDialog("Victory! You defeated " + currentGachaVillain.getEname() + "!");
             JPanel victoryScreen = createVictoryScreen();
             JPanel parentPanel = (JPanel) battleMenu.getParent();
             parentPanel.add(victoryScreen, "victoryScreen");
             ((CardLayout) parentPanel.getLayout()).show(parentPanel, "victoryScreen");
         } else {
-            System.err.println("Refresh the page");
+            log("Battle Outcome: Continuing Battle");
             refreshBattleMenu((CardLayout) battleMenu.getParent().getLayout(), (JPanel) battleMenu.getParent());
         }
     }
