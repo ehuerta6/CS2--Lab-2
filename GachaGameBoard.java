@@ -649,191 +649,58 @@ public class GachaGameBoard {
 
     private static void handleBattleOutcome(boolean[] lives) {
         if (!lives[0]) {
-            JPanel panel = new JPanel(new BorderLayout(10, 10));
-            panel.setBackground(new Color(70, 30, 30));
-
-            JLabel messageLabel = new JLabel("Game Over! Your hero has been defeated.");
-            messageLabel.setForeground(Color.WHITE);
-            messageLabel.setHorizontalAlignment(JLabel.CENTER);
-            messageLabel.setFont(new Font("Arial", Font.BOLD, 18));
-            panel.add(messageLabel, BorderLayout.CENTER);
-
-            JOptionPane.showMessageDialog(mainFrame, panel, "Game Over", JOptionPane.PLAIN_MESSAGE);
-            
+            showDefeatScreen();
             // Reset the current hero and villain
             currentGachaHero = null;
             currentGachaVillain = null;
-            
             // Return to the main menu
-            cardLayout.show(mainPanel, "mainMenu");
+            SwingUtilities.invokeLater(() -> cardLayout.show(mainPanel, "mainMenu"));
         } else if (!lives[1]) {
-            JPanel panel = new JPanel(new BorderLayout(10, 10));
-            panel.setBackground(new Color(30, 70, 30));
-
-            JLabel messageLabel = new JLabel("Congratulations! You have defeated the villain.");
-            messageLabel.setForeground(Color.WHITE);
-            messageLabel.setHorizontalAlignment(JLabel.CENTER);
-            messageLabel.setFont(new Font("Arial", Font.BOLD, 18));
-            panel.add(messageLabel, BorderLayout.CENTER);
-
-            JOptionPane.showMessageDialog(mainFrame, panel, "Victory", JOptionPane.PLAIN_MESSAGE);
-            
+            showVictoryScreen();
             // Draw a new villain
             currentGachaVillain = gachaVillainArray[gachaPoolVillain.singleDraw()];
             resetCharacterHP(currentGachaVillain);
             showNewVillainDialog(currentGachaVillain);
-        }
-        refreshBattleMenu();
-    }
-
-    private static void refreshBattleMenu() {
-        JPanel newBattleMenu = createBattleMenu();
-        mainPanel.removeAll();
-        mainPanel.add(newBattleMenu, "battleMenu");
-        cardLayout.show(mainPanel, "battleMenu");
-        mainPanel.revalidate();
-        mainPanel.repaint();
-
-        // Update HP bars
-        if (heroHPBar != null) {
-            updateHPBar(heroHPBar, currentGachaHero.getEhp(), currentGachaHero.getOriginalHp());
-        }
-        if (villainHPBar != null) {
-            updateHPBar(villainHPBar, currentGachaVillain.getEhp(), currentGachaVillain.getOriginalHp());
+            refreshBattleMenu();
+        } else {
+            refreshBattleMenu();
         }
     }
 
-    private static void showNewHeroDialog(GachaHero hero) {
-        JPanel panel = new JPanel(new BorderLayout(20, 20));
-        panel.setBackground(new Color(30, 30, 70));
-        panel.setPreferredSize(new Dimension(600, 400));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setOpaque(false);
-
-        JLabel nameLabel = new JLabel(hero.getEname());
-        nameLabel.setForeground(Color.WHITE);
-        nameLabel.setHorizontalAlignment(JLabel.CENTER);
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 28));
-        headerPanel.add(nameLabel, BorderLayout.CENTER);
-
-        JLabel tierLabel = new JLabel("Tier " + hero.getErarity());
-        tierLabel.setForeground(getStarColor(hero.getErarity()));
-        tierLabel.setHorizontalAlignment(JLabel.CENTER);
-        tierLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        headerPanel.add(tierLabel, BorderLayout.SOUTH);
-
-        panel.add(headerPanel, BorderLayout.NORTH);
-
-        ImageIcon originalIcon = new ImageIcon("hero-sprite.png");
-        Image scaledImage = originalIcon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
-        ImageIcon scaledIcon = new ImageIcon(scaledImage);
-        JLabel imageLabel = new JLabel(scaledIcon);
-        imageLabel.setBorder(BorderFactory.createLineBorder(getStarColor(hero.getErarity()), 3));
-        panel.add(imageLabel, BorderLayout.WEST);
-
-        JPanel statsPanel = new JPanel(new GridLayout(6, 1, 10, 10));
-        statsPanel.setOpaque(false);
-        addEnhancedStatBar(statsPanel, "HP", hero.getEhp(), hero.getOriginalHp(), hero.getErarity());
-        addEnhancedStatBar(statsPanel, "Attack", hero.getEattack(), 100, hero.getErarity());
-        addEnhancedStatBar(statsPanel, "Defense", hero.getEdefense(), 100, hero.getErarity());
-        addEnhancedStatBar(statsPanel, "Speed", hero.getEspeed(), 100, hero.getErarity());
-        addEnhancedStatBar(statsPanel, "MP", hero.getEmp(), 100, hero.getErarity());
-        addEnhancedStatBar(statsPanel, "Luck", hero.getEluck(), 100, hero.getErarity());
-        panel.add(statsPanel, BorderLayout.CENTER);
-
-        JOptionPane.showMessageDialog(mainFrame, panel, "New Hero Drawn", JOptionPane.PLAIN_MESSAGE);
+    private static void showDefeatScreen() {
+        showCompactMessageDialog(
+            "DEFEAT",
+            currentGachaHero.getEname() + " has fallen in battle.<br>The forces of evil grow stronger...",
+            new Color(50, 20, 20),
+            Color.RED
+        );
     }
 
-    private static void showNewVillainDialog(GachaVillain villain) {
-        JPanel panel = new JPanel(new BorderLayout(20, 20));
-        panel.setBackground(new Color(70, 30, 30));
-        panel.setPreferredSize(new Dimension(600, 400));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setOpaque(false);
-
-        JLabel nameLabel = new JLabel(villain.getEname());
-        nameLabel.setForeground(Color.WHITE);
-        nameLabel.setHorizontalAlignment(JLabel.CENTER);
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 28));
-        headerPanel.add(nameLabel, BorderLayout.CENTER);
-
-        JLabel tierLabel = new JLabel("Tier " + villain.getErarity());
-        tierLabel.setForeground(getStarColor(villain.getErarity()));
-        tierLabel.setHorizontalAlignment(JLabel.CENTER);
-        tierLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        headerPanel.add(tierLabel, BorderLayout.SOUTH);
-
-        panel.add(headerPanel, BorderLayout.NORTH);
-
-        ImageIcon originalIcon = new ImageIcon("villain-sprite.png");
-        Image scaledImage = originalIcon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
-        ImageIcon scaledIcon = new ImageIcon(scaledImage);
-        JLabel imageLabel = new JLabel(scaledIcon);
-        imageLabel.setBorder(BorderFactory.createLineBorder(getStarColor(villain.getErarity()), 3));
-        panel.add(imageLabel, BorderLayout.WEST);
-
-        JPanel statsPanel = new JPanel(new GridLayout(4, 1, 10, 10));
-        statsPanel.setOpaque(false);
-        addEnhancedStatBar(statsPanel, "HP", villain.getEhp(), villain.getOriginalHp(), villain.getErarity());
-        addEnhancedStatBar(statsPanel, "Attack", villain.getEattack(), 100, villain.getErarity());
-        addEnhancedStatBar(statsPanel, "Defense", villain.getEdefense(), 100, villain.getErarity());
-        addEnhancedStatBar(statsPanel, "Speed", villain.getEspeed(), 100, villain.getErarity());
-        panel.add(statsPanel, BorderLayout.CENTER);
-
-        JOptionPane.showMessageDialog(mainFrame, panel, "New Villain Appeared", JOptionPane.PLAIN_MESSAGE);
-    }
-
-    private static void addEnhancedStatBar(JPanel panel, String statName, int value, int maxValue, int rarity) {
-        JPanel statPanel = new JPanel(new BorderLayout(10, 0));
-        statPanel.setOpaque(false);
-
-        JLabel nameLabel = new JLabel(statName + ":");
-        nameLabel.setForeground(Color.WHITE);
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        nameLabel.setPreferredSize(new Dimension(80, 25));
-        statPanel.add(nameLabel, BorderLayout.WEST);
-
-        JProgressBar statBar = new JProgressBar(0, maxValue);
-        statBar.setValue(value);
-        statBar.setStringPainted(true);
-        statBar.setString(value + " / " + maxValue);
-        statBar.setForeground(getStarColor(rarity));
-        statBar.setBackground(new Color(44, 62, 80));
-        statBar.setFont(new Font("Arial", Font.BOLD, 14));
-        statBar.setBorder(BorderFactory.createLineBorder(Color.WHITE, 1));
-        statPanel.add(statBar, BorderLayout.CENTER);
-
-        panel.add(statPanel);
+    private static void showVictoryScreen() {
+        showCompactMessageDialog(
+            "VICTORY",
+            "You have vanquished " + currentGachaVillain.getEname() + "!<br>But another foe approaches...",
+            new Color(20, 50, 20),
+            Color.GREEN
+        );
     }
 
     private static void showEscapeSuccessScreen() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(new Color(30, 70, 30));
-
-        JLabel messageLabel = new JLabel("You successfully escaped!");
-        messageLabel.setForeground(Color.WHITE);
-        messageLabel.setHorizontalAlignment(JLabel.CENTER);
-        messageLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        panel.add(messageLabel, BorderLayout.CENTER);
-
-        JOptionPane.showMessageDialog(mainFrame, panel, "Escape Successful", JOptionPane.PLAIN_MESSAGE);
+        showCompactMessageDialog(
+            "ESCAPED",
+            "Escaped successfully, coward!<br>You live to fight another day...",
+            new Color(20, 20, 50),
+            Color.YELLOW
+        );
     }
 
     private static void showEscapeFailScreen() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(new Color(70, 30, 30));
-
-        JLabel messageLabel = new JLabel("Escape failed! The villain attacks!");
-        messageLabel.setForeground(Color.WHITE);
-        messageLabel.setHorizontalAlignment(JLabel.CENTER);
-        messageLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        panel.add(messageLabel, BorderLayout.CENTER);
-
-        JOptionPane.showMessageDialog(mainFrame, panel, "Escape Failed", JOptionPane.PLAIN_MESSAGE);
+        showCompactMessageDialog(
+            "ESCAPE FAILED",
+            "Escape failed! Prepare to fight!<br>The villain attacks...",
+            new Color(50, 30, 20),
+            Color.ORANGE
+        );
     }
 
     /**
@@ -990,7 +857,7 @@ public class GachaGameBoard {
 
     private static void updateHPBar(JProgressBar hpBar, int currentHP, int maxHP) {
         hpBar.setValue(currentHP);
-        hpBar.setString(currentHP + " / " + maxHP);
+        hpBar.setString("HP: " + currentHP + " / " + maxHP);
     }
 
     private static void attemptRun() {
@@ -1009,6 +876,8 @@ public class GachaGameBoard {
             
             if (currentGachaHero.getEhp() <= 0) {
                 handleBattleOutcome(new boolean[]{false, true});
+            } else {
+                refreshBattleMenu();
             }
         }
     }
@@ -1052,5 +921,146 @@ public class GachaGameBoard {
         // Switch to the battle menu
         refreshBattleMenu();
         cardLayout.show(mainPanel, "battleMenu");
+    }
+
+    private static void refreshBattleMenu() {
+        SwingUtilities.invokeLater(() -> {
+            JPanel newBattleMenu = createBattleMenu();
+            mainPanel.remove(mainPanel.getComponent(mainPanel.getComponentCount() - 1));
+            mainPanel.add(newBattleMenu, "battleMenu");
+            cardLayout.show(mainPanel, "battleMenu");
+        });
+    }
+
+    private static void showNewVillainDialog(GachaVillain villain) {
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBackground(new Color(30, 30, 40));
+        panel.setPreferredSize(new Dimension(500, 350));
+        panel.setBorder(BorderFactory.createLineBorder(getStarColor(villain.getErarity()), 3));
+
+        JLabel nameLabel = new JLabel(villain.getEname());
+        nameLabel.setForeground(Color.WHITE);
+        nameLabel.setHorizontalAlignment(JLabel.CENTER);
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 28));
+        panel.add(nameLabel, BorderLayout.NORTH);
+
+        JPanel contentPanel = new JPanel(new BorderLayout(20, 0));
+        contentPanel.setOpaque(false);
+
+        // Image
+        ImageIcon originalIcon = new ImageIcon("villain-sprite.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        JLabel imageLabel = new JLabel(scaledIcon);
+        imageLabel.setBorder(BorderFactory.createLineBorder(getStarColor(villain.getErarity()), 2));
+        contentPanel.add(imageLabel, BorderLayout.WEST);
+
+        // Stats Panel
+        JPanel statsPanel = new JPanel(new GridLayout(4, 1, 10, 10));
+        statsPanel.setOpaque(false);
+
+        addStatBar(statsPanel, "HP", villain.getEhp(), villain.getOriginalHp(), villain.getErarity());
+        addStatBar(statsPanel, "Attack", villain.getEattack(), 100, villain.getErarity());
+        addStatBar(statsPanel, "Defense", villain.getEdefense(), 100, villain.getErarity());
+        addStatBar(statsPanel, "Speed", villain.getEspeed(), 100, villain.getErarity());
+
+        contentPanel.add(statsPanel, BorderLayout.CENTER);
+        panel.add(contentPanel, BorderLayout.CENTER);
+
+        JLabel tierLabel = new JLabel("Tier " + villain.getErarity());
+        tierLabel.setForeground(getStarColor(villain.getErarity()));
+        tierLabel.setHorizontalAlignment(JLabel.CENTER);
+        tierLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        panel.add(tierLabel, BorderLayout.SOUTH);
+
+        JOptionPane.showMessageDialog(mainFrame, panel, "New Villain", JOptionPane.PLAIN_MESSAGE);
+    }
+
+    private static void showNewHeroDialog(GachaHero hero) {
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBackground(new Color(30, 30, 40));
+        panel.setPreferredSize(new Dimension(500, 350));
+        panel.setBorder(BorderFactory.createLineBorder(getStarColor(hero.getErarity()), 3));
+
+        JLabel nameLabel = new JLabel(hero.getEname());
+        nameLabel.setForeground(Color.WHITE);
+        nameLabel.setHorizontalAlignment(JLabel.CENTER);
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 28));
+        panel.add(nameLabel, BorderLayout.NORTH);
+
+        JPanel contentPanel = new JPanel(new BorderLayout(20, 0));
+        contentPanel.setOpaque(false);
+
+        // Image
+        ImageIcon originalIcon = new ImageIcon("hero-sprite.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        JLabel imageLabel = new JLabel(scaledIcon);
+        imageLabel.setBorder(BorderFactory.createLineBorder(getStarColor(hero.getErarity()), 2));
+        contentPanel.add(imageLabel, BorderLayout.WEST);
+
+        // Stats Panel
+        JPanel statsPanel = new JPanel(new GridLayout(6, 1, 10, 10));
+        statsPanel.setOpaque(false);
+
+        addStatBar(statsPanel, "HP", hero.getEhp(), hero.getOriginalHp(), hero.getErarity());
+        addStatBar(statsPanel, "Attack", hero.getEattack(), 100, hero.getErarity());
+        addStatBar(statsPanel, "Defense", hero.getEdefense(), 100, hero.getErarity());
+        addStatBar(statsPanel, "Speed", hero.getEspeed(), 100, hero.getErarity());
+        addStatBar(statsPanel, "MP", hero.getEmp(), 100, hero.getErarity());
+        addStatBar(statsPanel, "Luck", hero.getEluck(), 100, hero.getErarity());
+
+        contentPanel.add(statsPanel, BorderLayout.CENTER);
+        panel.add(contentPanel, BorderLayout.CENTER);
+
+        JLabel tierLabel = new JLabel("Tier " + hero.getErarity());
+        tierLabel.setForeground(getStarColor(hero.getErarity()));
+        tierLabel.setHorizontalAlignment(JLabel.CENTER);
+        tierLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        panel.add(tierLabel, BorderLayout.SOUTH);
+
+        JOptionPane.showMessageDialog(mainFrame, panel, "New Hero", JOptionPane.PLAIN_MESSAGE);
+    }
+
+    private static void addStatBar(JPanel panel, String statName, int value, int maxValue, int rarity) {
+        JPanel statPanel = new JPanel(new BorderLayout(10, 0));
+        statPanel.setOpaque(false);
+
+        JLabel nameLabel = new JLabel(statName + ":");
+        nameLabel.setForeground(Color.WHITE);
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        statPanel.add(nameLabel, BorderLayout.WEST);
+
+        JProgressBar statBar = new JProgressBar(0, maxValue);
+        statBar.setValue(value);
+        statBar.setStringPainted(true);
+        statBar.setString(value + " / " + maxValue);
+        statBar.setForeground(getStarColor(rarity));
+        statBar.setBackground(new Color(60, 60, 60));
+        statBar.setFont(new Font("Arial", Font.BOLD, 12));
+        statPanel.add(statBar, BorderLayout.CENTER);
+
+        panel.add(statPanel);
+    }
+
+    private static void showCompactMessageDialog(String title, String message, Color backgroundColor, Color accentColor) {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(backgroundColor);
+        panel.setPreferredSize(new Dimension(350, 200));
+        panel.setBorder(BorderFactory.createLineBorder(accentColor, 3));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setForeground(accentColor);
+        titleLabel.setHorizontalAlignment(JLabel.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        panel.add(titleLabel, BorderLayout.NORTH);
+
+        JLabel messageLabel = new JLabel("<html><center>" + message + "</center></html>");
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setHorizontalAlignment(JLabel.CENTER);
+        messageLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        panel.add(messageLabel, BorderLayout.CENTER);
+
+        JOptionPane.showMessageDialog(mainFrame, panel, title, JOptionPane.PLAIN_MESSAGE);
     }
 }
