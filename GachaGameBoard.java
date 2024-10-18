@@ -55,6 +55,9 @@ public class GachaGameBoard {
 
     private static int villainsDefeated = 0; // Add this line to keep track of defeated villains
 
+    private static int drawChances = 1; // Add this line to track draw chances
+    private static int runChances = 1; // Add this line to track run chances
+
     private static void log(String message) {
         String timestamp = timeFormat.format(new Date());
         String logMessage = "[" + timestamp + "] " + message;
@@ -482,12 +485,22 @@ public class GachaGameBoard {
         battleMenu.setBackground(new Color(40, 44, 52)); // Dark background
         battleMenu.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Add villain defeat counter
+        // Add villain defeat counter, draw chances, and run chances
+        JPanel counterPanel = new JPanel(new GridLayout(1, 3));
+        counterPanel.setOpaque(false);
+
         JLabel defeatCountLabel = new JLabel("Villains Defeated: " + villainsDefeated);
-        defeatCountLabel.setForeground(Color.WHITE);
-        defeatCountLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        defeatCountLabel.setHorizontalAlignment(JLabel.CENTER);
-        battleMenu.add(defeatCountLabel, BorderLayout.NORTH);
+        JLabel drawChancesLabel = new JLabel("Draw Chances: " + drawChances);
+        JLabel runChancesLabel = new JLabel("Run Chances: " + runChances);
+
+        for (JLabel label : new JLabel[]{defeatCountLabel, drawChancesLabel, runChancesLabel}) {
+            label.setForeground(Color.WHITE);
+            label.setFont(new Font("Arial", Font.BOLD, 14));
+            label.setHorizontalAlignment(JLabel.CENTER);
+            counterPanel.add(label);
+        }
+
+        battleMenu.add(counterPanel, BorderLayout.NORTH);
 
         // Center panel for character images, names, HP bars, and stats
         JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 0));
@@ -642,14 +655,23 @@ public class GachaGameBoard {
                     defend();
                     break;
                 case "Draw New Hero":
-                    currentGachaHero = gachaHeroArray[gachaPoolHero.singleDraw()];
-                    resetCharacterHP(currentGachaHero);
-                    log("You drew a new hero: " + currentGachaHero.getEname());
-                    showNewHeroDialog(currentGachaHero);
-                    refreshBattleMenu();
+                    if (drawChances > 0) {
+                        currentGachaHero = gachaHeroArray[gachaPoolHero.singleDraw()];
+                        resetCharacterHP(currentGachaHero);
+                        log("You drew a new hero: " + currentGachaHero.getEname());
+                        showNewHeroDialog(currentGachaHero);
+                        drawChances--;
+                        refreshBattleMenu();
+                    } else {
+                        showNoChancesDialog("Draw", "draw a new hero");
+                    }
                     break;
                 case "Run":
-                    attemptRun();
+                    if (runChances > 0) {
+                        attemptRun();
+                    } else {
+                        showNoChancesDialog("Run", "attempt to run");
+                    }
                     break;
             }
         });
@@ -660,64 +682,46 @@ public class GachaGameBoard {
     private static void handleBattleOutcome(boolean[] lives) {
         if (!lives[0]) {
             showDefeatScreen();
-            // Reset the current hero and villain
             currentGachaHero = null;
             currentGachaVillain = null;
-            villainsDefeated = 0; // Reset the counter on defeat
-            // Return to the main menu
+            villainsDefeated = 0;
+            drawChances = 1;
+            runChances = 1;
             SwingUtilities.invokeLater(() -> cardLayout.show(mainPanel, "mainMenu"));
         } else if (!lives[1]) {
-            villainsDefeated++; // Increment the counter
+            villainsDefeated++;
             showVictoryScreen();
-            // Draw a new villain
             currentGachaVillain = gachaVillainArray[gachaPoolVillain.singleDraw()];
             resetCharacterHP(currentGachaVillain);
             showNewVillainDialog(currentGachaVillain);
+            drawChances = 1;
+            runChances = 1;
             refreshBattleMenu();
         } else {
             refreshBattleMenu();
         }
     }
 
-    private static void showDefeatScreen() {
-        showCompactMessageDialog(
-            "DEFEAT",
-            currentGachaHero.getEname() + " has fallen in battle.<br>The forces of evil grow stronger...",
-            new Color(50, 20, 20),
-            Color.RED,
-            "hero-sprite.png"
-        );
-    }
+    private static void showNoChancesDialog(String action, String actionDescription) {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(new Color(30, 30, 40));
+        panel.setPreferredSize(new Dimension(400, 200));
+        panel.setBorder(BorderFactory.createLineBorder(Color.RED, 3));
 
-    private static void showVictoryScreen() {
-        showCompactMessageDialog(
-            "VICTORY",
-            "You have vanquished " + currentGachaVillain.getEname() + "!<br>But another foe approaches...",
-            new Color(20, 50, 20),
-            Color.GREEN,
-            "villain-sprite.png"
-        );
-    }
+        JLabel messageLabel = new JLabel("<html><center>No " + action.toLowerCase() + " chances remaining!<br>Defeat the current villain to earn another chance to " + actionDescription + ".</center></html>");
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setHorizontalAlignment(JLabel.CENTER);
+        messageLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        panel.add(messageLabel, BorderLayout.CENTER);
 
-    private static void showEscapeSuccessScreen() {
-        showCompactMessageDialog(
-            "ESCAPED",
-            "Escaped successfully, coward!<br>You live to fight another day...",
-            new Color(20, 20, 50),
-            Color.YELLOW,
-            "hero-sprite.png"
-        );
-        SwingUtilities.invokeLater(() -> cardLayout.show(mainPanel, "mainMenu"));
-    }
+        ImageIcon lockIcon = new ImageIcon("lock-icon.png");
+        if (lockIcon.getImageLoadStatus() == MediaTracker.COMPLETE) {
+            Image scaledImage = lockIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+            JLabel iconLabel = new JLabel(new ImageIcon(scaledImage));
+            panel.add(iconLabel, BorderLayout.WEST);
+        }
 
-    private static void showEscapeFailScreen() {
-        showCompactMessageDialog(
-            "ESCAPE FAILED",
-            "Escape failed! Prepare to fight!<br>The villain attacks...",
-            new Color(50, 30, 20),
-            Color.ORANGE,
-            "villain-sprite.png"
-        );
+        JOptionPane.showMessageDialog(mainFrame, panel, "No " + action + " Chances", JOptionPane.PLAIN_MESSAGE);
     }
 
     /**
@@ -882,9 +886,12 @@ public class GachaGameBoard {
         if (Math.random() * 100 < escapeChance) {
             log(currentGachaHero.getEname() + " successfully escaped from " + currentGachaVillain.getEname() + "!");
             showEscapeSuccessScreen();
+            runChances--;
+            refreshBattleMenu();
         } else {
             log(currentGachaHero.getEname() + " failed to escape from " + currentGachaVillain.getEname() + "!");
             showEscapeFailScreen();
+            runChances--;
             // The villain gets a free attack
             int villainDamage = calculateDamage(currentGachaVillain.getErarity(), currentGachaVillain.getEattack(), 3, currentGachaVillain.getEspeed(), currentGachaHero.getEdefense(), false);
             currentGachaHero.setEhp(Math.max(0, currentGachaHero.getEhp() - villainDamage));
@@ -1092,5 +1099,45 @@ public class GachaGameBoard {
         panel.add(contentPanel, BorderLayout.CENTER);
 
         JOptionPane.showMessageDialog(mainFrame, panel, title, JOptionPane.PLAIN_MESSAGE);
+    }
+
+    private static void showDefeatScreen() {
+        showCompactMessageDialog(
+            "DEFEAT",
+            currentGachaHero.getEname() + " has fallen in battle.<br>The forces of evil grow stronger...",
+            new Color(50, 20, 20),
+            Color.RED,
+            "hero-sprite.png"
+        );
+    }
+
+    private static void showVictoryScreen() {
+        showCompactMessageDialog(
+            "VICTORY",
+            "You have vanquished " + currentGachaVillain.getEname() + "!<br>But another foe approaches...",
+            new Color(20, 50, 20),
+            Color.GREEN,
+            "villain-sprite.png"
+        );
+    }
+
+    private static void showEscapeSuccessScreen() {
+        showCompactMessageDialog(
+            "ESCAPED",
+            "Escaped successfully!<br>You live to fight another day...",
+            new Color(20, 20, 50),
+            Color.YELLOW,
+            "hero-sprite.png"
+        );
+    }
+
+    private static void showEscapeFailScreen() {
+        showCompactMessageDialog(
+            "ESCAPE FAILED",
+            "Escape failed! Prepare to fight!<br>The villain attacks...",
+            new Color(50, 30, 20),
+            Color.ORANGE,
+            "villain-sprite.png"
+        );
     }
 }
