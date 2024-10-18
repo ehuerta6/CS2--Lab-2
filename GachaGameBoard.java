@@ -76,6 +76,8 @@ public class GachaGameBoard {
         
         System.out.println(consoleMessage);
         System.out.println(ANSI_YELLOW + "Villains Defeated: " + villainsDefeated + ANSI_RESET);
+        System.out.println(ANSI_YELLOW + "Draw Chances: " + drawChances + ANSI_RESET);
+        System.out.println(ANSI_YELLOW + "Run Chances: " + runChances + ANSI_RESET);
         System.out.println(ANSI_YELLOW + "----------------------------------------" + ANSI_RESET);
         
         battleLog.append(logMessage).append("\n");
@@ -897,22 +899,27 @@ public class GachaGameBoard {
 
     private static void defend() {
         log(currentGachaHero.getEname() + " takes a defensive stance.");
-        // Increase defense for one turn (you can implement this logic)
-        // For example, you could temporarily increase the hero's defense by 50%
-        int originalDefense = currentGachaHero.getEdefense();
-        currentGachaHero.setEdefense((int)(originalDefense * 1.5));
         
-        // Villain still attacks
-        int villainDamage = calculateDamage(currentGachaVillain.getErarity(), currentGachaVillain.getEattack(), 3, currentGachaVillain.getEspeed(), currentGachaHero.getEdefense(), false);
+        // Calculate a random percentage between 0% and 25% of the hero's normal attack damage
+        double damagePercentage = Math.random() * 0.25;
+        int defenseDamage = (int) (calculateDamage(currentGachaHero.getErarity(), currentGachaHero.getEattack(), 3, currentGachaHero.getEspeed(), currentGachaVillain.getEdefense(), false) * damagePercentage);
+        
+        if (defenseDamage > 0) {
+            currentGachaVillain.setEhp(Math.max(0, currentGachaVillain.getEhp() - defenseDamage));
+            log(currentGachaHero.getEname() + " dealt " + defenseDamage + " damage while defending!");
+            log(currentGachaVillain.getEname() + " HP: " + currentGachaVillain.getEhp() + "/" + currentGachaVillain.getOriginalHp());
+        } else {
+            log(currentGachaHero.getEname() + " didn't deal any damage while defending.");
+        }
+
+        // Villain's turn to attack
+        int villainDamage = calculateDamage(currentGachaVillain.getErarity(), currentGachaVillain.getEattack(), 3, currentGachaVillain.getEspeed(), currentGachaHero.getEdefense(), true);
         currentGachaHero.setEhp(Math.max(0, currentGachaHero.getEhp() - villainDamage));
-        log(currentGachaVillain.getEname() + " attacked and dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
+        log(currentGachaVillain.getEname() + " dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
         log(currentGachaHero.getEname() + " HP: " + currentGachaHero.getEhp() + "/" + currentGachaHero.getOriginalHp());
-        
-        // Reset defense to original value
-        currentGachaHero.setEdefense(originalDefense);
-        
-        if (currentGachaHero.getEhp() <= 0) {
-            handleBattleOutcome(new boolean[]{false, true});
+
+        if (currentGachaHero.getEhp() <= 0 || currentGachaVillain.getEhp() <= 0) {
+            handleBattleOutcome(new boolean[]{currentGachaHero.getEhp() > 0, currentGachaVillain.getEhp() > 0});
         } else {
             refreshBattleMenu();
         }
@@ -1114,8 +1121,8 @@ public class GachaGameBoard {
         showCompactMessageDialog(
             "ESCAPED",
             "Escaped successfully!<br>You live to fight another day...",
-            new Color(20, 20, 50),
-            Color.YELLOW,
+            new Color(20, 60, 20), // Darker green background
+            new Color(0, 255, 0),  // Bright green text
             "hero-sprite.png"
         );
     }
@@ -1123,9 +1130,9 @@ public class GachaGameBoard {
     private static void showEscapeFailScreen() {
         showCompactMessageDialog(
             "ESCAPE FAILED",
-            "Escape failed! Prepare to fight!<br>The villain attacks...",
-            new Color(50, 30, 20),
-            Color.ORANGE,
+            "Escape failed!<br>The villain attacks...",
+            new Color(60, 20, 20), // Darker red background
+            new Color(255, 0, 0),  // Bright red text
             "villain-sprite.png"
         );
     }
