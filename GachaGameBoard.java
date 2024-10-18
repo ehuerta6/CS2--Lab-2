@@ -682,11 +682,7 @@ public class GachaGameBoard {
     private static void handleBattleOutcome(boolean[] lives) {
         if (!lives[0]) {
             showDefeatScreen();
-            currentGachaHero = null;
-            currentGachaVillain = null;
-            villainsDefeated = 0;
-            drawChances = 1;
-            runChances = 1;
+            resetGameState();
             SwingUtilities.invokeLater(() -> cardLayout.show(mainPanel, "mainMenu"));
         } else if (!lives[1]) {
             villainsDefeated++;
@@ -807,15 +803,7 @@ public class GachaGameBoard {
 
         instructionsButton.addActionListener(e -> showInstructions());
 
-        exitButton.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(mainFrame, 
-                "Are you sure you want to exit the game?", 
-                "Exit Game", 
-                JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                System.exit(0);
-            }
-        });
+        exitButton.addActionListener(e -> showExitGameDialog());
 
         return mainMenu;
     }
@@ -887,7 +875,8 @@ public class GachaGameBoard {
             log(currentGachaHero.getEname() + " successfully escaped from " + currentGachaVillain.getEname() + "!");
             showEscapeSuccessScreen();
             runChances--;
-            refreshBattleMenu();
+            resetGameState();
+            SwingUtilities.invokeLater(() -> cardLayout.show(mainPanel, "mainMenu"));
         } else {
             log(currentGachaHero.getEname() + " failed to escape from " + currentGachaVillain.getEname() + "!");
             showEscapeFailScreen();
@@ -1139,5 +1128,94 @@ public class GachaGameBoard {
             Color.ORANGE,
             "villain-sprite.png"
         );
+    }
+
+    private static void resetGameState() {
+        currentGachaHero = null;
+        currentGachaVillain = null;
+        villainsDefeated = 0;
+        drawChances = 1;
+        runChances = 1;
+        battleLog = new StringBuilder(); // Reset the battle log
+        if (battleLogArea != null) {
+            battleLogArea.setText("");
+        }
+    }
+
+    private static void showExitGameDialog() {
+        JPanel panel = new JPanel(new BorderLayout(20, 20)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g.create();
+                int w = getWidth();
+                int h = getHeight();
+                GradientPaint gp = new GradientPaint(0, 0, new Color(30, 30, 70), w, h, new Color(60, 60, 120));
+                g2d.setPaint(gp);
+                g2d.fillRect(0, 0, w, h);
+                g2d.dispose();
+            }
+        };
+        panel.setPreferredSize(new Dimension(400, 200));
+        panel.setBorder(BorderFactory.createLineBorder(new Color(255, 215, 0), 3)); // Gold border
+
+        JLabel titleLabel = new JLabel("Exit Game");
+        titleLabel.setForeground(new Color(255, 215, 0)); // Gold color
+        titleLabel.setHorizontalAlignment(JLabel.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        panel.add(titleLabel, BorderLayout.NORTH);
+
+        JLabel messageLabel = new JLabel("<html><center>Are you sure you want to exit?<br>Your progress will be lost.</center></html>");
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setHorizontalAlignment(JLabel.CENTER);
+        messageLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        panel.add(messageLabel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        buttonPanel.setOpaque(false);
+
+        JButton yesButton = createStylishButton("Yes", new Color(231, 76, 60)); // Red
+        JButton noButton = createStylishButton("No", new Color(46, 204, 113)); // Green
+
+        buttonPanel.add(yesButton);
+        buttonPanel.add(noButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        JDialog dialog = new JDialog(mainFrame, "Exit Game", true);
+        dialog.setContentPane(panel);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.pack();
+        dialog.setLocationRelativeTo(mainFrame);
+
+        yesButton.addActionListener(e -> {
+            dialog.dispose();
+            System.exit(0);
+        });
+
+        noButton.addActionListener(e -> dialog.dispose());
+
+        dialog.setVisible(true);
+    }
+
+    private static JButton createStylishButton(String text, Color color) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 18));
+        button.setBackground(color);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createRaisedBevelBorder());
+        button.setPreferredSize(new Dimension(120, 50));
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(color.brighter());
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(color);
+            }
+        });
+
+        return button;
     }
 }
