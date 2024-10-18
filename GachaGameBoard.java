@@ -672,7 +672,8 @@ public class GachaGameBoard {
             "DEFEAT",
             currentGachaHero.getEname() + " has fallen in battle.<br>The forces of evil grow stronger...",
             new Color(50, 20, 20),
-            Color.RED
+            Color.RED,
+            "hero-sprite.png"
         );
     }
 
@@ -681,7 +682,8 @@ public class GachaGameBoard {
             "VICTORY",
             "You have vanquished " + currentGachaVillain.getEname() + "!<br>But another foe approaches...",
             new Color(20, 50, 20),
-            Color.GREEN
+            Color.GREEN,
+            "villain-sprite.png"
         );
     }
 
@@ -690,8 +692,10 @@ public class GachaGameBoard {
             "ESCAPED",
             "Escaped successfully, coward!<br>You live to fight another day...",
             new Color(20, 20, 50),
-            Color.YELLOW
+            Color.YELLOW,
+            "hero-sprite.png"
         );
+        SwingUtilities.invokeLater(() -> cardLayout.show(mainPanel, "mainMenu"));
     }
 
     private static void showEscapeFailScreen() {
@@ -699,7 +703,8 @@ public class GachaGameBoard {
             "ESCAPE FAILED",
             "Escape failed! Prepare to fight!<br>The villain attacks...",
             new Color(50, 30, 20),
-            Color.ORANGE
+            Color.ORANGE,
+            "villain-sprite.png"
         );
     }
 
@@ -1043,10 +1048,10 @@ public class GachaGameBoard {
         panel.add(statPanel);
     }
 
-    private static void showCompactMessageDialog(String title, String message, Color backgroundColor, Color accentColor) {
+    private static void showCompactMessageDialog(String title, String message, Color backgroundColor, Color accentColor, String imagePath) {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(backgroundColor);
-        panel.setPreferredSize(new Dimension(350, 200));
+        panel.setPreferredSize(new Dimension(400, 250));
         panel.setBorder(BorderFactory.createLineBorder(accentColor, 3));
 
         JLabel titleLabel = new JLabel(title);
@@ -1055,11 +1060,24 @@ public class GachaGameBoard {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
         panel.add(titleLabel, BorderLayout.NORTH);
 
+        JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
+        contentPanel.setOpaque(false);
+
+        if (imagePath != null) {
+            ImageIcon originalIcon = new ImageIcon(imagePath);
+            Image scaledImage = originalIcon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+            ImageIcon scaledIcon = new ImageIcon(scaledImage);
+            JLabel imageLabel = new JLabel(scaledIcon);
+            contentPanel.add(imageLabel, BorderLayout.WEST);
+        }
+
         JLabel messageLabel = new JLabel("<html><center>" + message + "</center></html>");
         messageLabel.setForeground(Color.WHITE);
         messageLabel.setHorizontalAlignment(JLabel.CENTER);
         messageLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        panel.add(messageLabel, BorderLayout.CENTER);
+        contentPanel.add(messageLabel, BorderLayout.CENTER);
+
+        panel.add(contentPanel, BorderLayout.CENTER);
 
         JOptionPane.showMessageDialog(mainFrame, panel, title, JOptionPane.PLAIN_MESSAGE);
     }
