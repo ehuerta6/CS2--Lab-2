@@ -53,6 +53,8 @@ public class GachaGameBoard {
 
     private static StringBuilder battleLog = new StringBuilder();
 
+    private static int villainsDefeated = 0; // Add this line to keep track of defeated villains
+
     private static void log(String message) {
         String timestamp = timeFormat.format(new Date());
         String logMessage = "[" + timestamp + "] " + message;
@@ -70,6 +72,7 @@ public class GachaGameBoard {
         }
         
         System.out.println(consoleMessage);
+        System.out.println(ANSI_YELLOW + "Villains Defeated: " + villainsDefeated + ANSI_RESET);
         System.out.println(ANSI_YELLOW + "----------------------------------------" + ANSI_RESET);
         
         battleLog.append(logMessage).append("\n");
@@ -479,6 +482,13 @@ public class GachaGameBoard {
         battleMenu.setBackground(new Color(40, 44, 52)); // Dark background
         battleMenu.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        // Add villain defeat counter
+        JLabel defeatCountLabel = new JLabel("Villains Defeated: " + villainsDefeated);
+        defeatCountLabel.setForeground(Color.WHITE);
+        defeatCountLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        defeatCountLabel.setHorizontalAlignment(JLabel.CENTER);
+        battleMenu.add(defeatCountLabel, BorderLayout.NORTH);
+
         // Center panel for character images, names, HP bars, and stats
         JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 0));
         centerPanel.setOpaque(false);
@@ -653,9 +663,11 @@ public class GachaGameBoard {
             // Reset the current hero and villain
             currentGachaHero = null;
             currentGachaVillain = null;
+            villainsDefeated = 0; // Reset the counter on defeat
             // Return to the main menu
             SwingUtilities.invokeLater(() -> cardLayout.show(mainPanel, "mainMenu"));
         } else if (!lives[1]) {
+            villainsDefeated++; // Increment the counter
             showVictoryScreen();
             // Draw a new villain
             currentGachaVillain = gachaVillainArray[gachaPoolVillain.singleDraw()];
