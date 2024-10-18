@@ -1,0 +1,24 @@
+Name,Rarity,HP,Attack,Defense,Speed
+Goblin Thief,1-Star,300,30,12,18
+Slime King,1-Star,180,35,14,12
+Haunted Armor,1-Star,160,28,15,11
+Cursed Sorcerer,1-Star,140,25,10,13
+Stone Sentinel,1-Star,180,18,100,4
+Vile Bat,1-Star,175,29,16,8
+Toxic Scorpion,1-Star,165,27,13,10
+Swamp Lurker,1-Star,160,26,14,9
+Cyclops Warrior,2-Star,220,40,22,6
+Dark Assassin,2-Star,240,38,20,7
+Ravenous Wolf,2-Star,230,18,40,12
+Spectral Phantom,2-Star,225,36,22,10
+Undead Knight,2-Star,215,32,25,8
+Crimson Ogre,2-Star,235,40,30,7
+Frost Dragon,3-Star,300,50,38,14
+Void Reaver,3-Star,320,52,35,13
+Death Claw,3-Star,310,48,32,15
+Obsidian Warlord,3-Star,305,47,34,11
+Ancient Leviathan,4-Star,400,60,40,10
+Plague Bearer,4-Star,420,62,45,8
+Doom Bringer,5-Star,450,120,50,9
+Broken Phantom,5-Star,10,9999,80,0
+Dread Emperor,5-Star,500,70,60,20
