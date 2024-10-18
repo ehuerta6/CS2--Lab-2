@@ -24,9 +24,26 @@ public class GachaGameBoard {
 
     private static final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
 
+    private static final Color BACKGROUND_COLOR = Color.WHITE;
+    private static final Color TEXT_COLOR = new Color(50, 50, 50);
+    private static final Color ACCENT_COLOR = new Color(0, 122, 255);
+    private static final Color STAT_BAR_COLOR = new Color(240, 240, 240);
+    private static JTextArea battleLogArea;
+
     private static void log(String message) {
         String timestamp = timeFormat.format(new Date());
-        System.out.println("[" + timestamp + "] " + message);
+        String logMessage = "[" + timestamp + "] " + message;
+        System.out.println(logMessage);
+        System.out.println("----------------------------------------");
+        
+        if (battleLogArea != null) {
+            battleLogArea.append(logMessage + "\n");
+            battleLogArea.setCaretPosition(battleLogArea.getDocument().getLength());
+        }
+    }
+
+    private static void consoleLog(String message) {
+        System.out.println(message);
         System.out.println("----------------------------------------");
     }
 
@@ -152,51 +169,49 @@ public class GachaGameBoard {
 
     // this method simulates an attack sequence between the current hero and villain
     public static boolean[] attackSequence() {
-        boolean[] lives = {true, true}; // this array tracks if the hero and villain are still alive
+        boolean[] lives = {true, true};
 
-        // this block handles the scenario when the hero's speed is greater than the villain's
         if (currentGachaHero.getEspeed() > currentGachaVillain.getEspeed()) {
-            log("Attack Sequence: Hero attacks first");
+            consoleLog(currentGachaHero.getEname() + " attacks first due to higher speed!");
             int heroDamage = calculateDamage(currentGachaHero.getErarity(), currentGachaHero.getEattack(), currentGachaHero.getEluck(), currentGachaHero.getEspeed(), currentGachaVillain.getEdefense(), true);
-            currentGachaVillain.setEhp(currentGachaVillain.getEhp() - heroDamage); // apply the hero's damage to the villain
+            currentGachaVillain.setEhp(Math.max(0, currentGachaVillain.getEhp() - heroDamage));
 
-            log(currentGachaHero.getEname() + " dealt " + heroDamage + " damage to " + currentGachaVillain.getEname());
+            consoleLog(currentGachaHero.getEname() + " dealt " + heroDamage + " damage to " + currentGachaVillain.getEname());
+            consoleLog(currentGachaVillain.getEname() + " HP: " + currentGachaVillain.getEhp());
 
-            // check if the villain is defeated
             if (currentGachaVillain.getEhp() <= 0) {
-                lives[1] = false; // villain is dead
+                lives[1] = false;
                 return lives;
             }
 
-            // villain attacks back with reduced power
             int villainDamage = calculateDamage(currentGachaVillain.getErarity(), currentGachaVillain.getEattack() / 2, 3, currentGachaVillain.getEspeed(), currentGachaHero.getEdefense(), false);
-            currentGachaHero.setEhp(currentGachaHero.getEhp() - villainDamage); // apply the villain's damage to the hero
+            currentGachaHero.setEhp(Math.max(0, currentGachaHero.getEhp() - villainDamage));
 
-            log(currentGachaVillain.getEname() + " dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
+            consoleLog(currentGachaVillain.getEname() + " dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
+            consoleLog(currentGachaHero.getEname() + " HP: " + currentGachaHero.getEhp());
 
-            // check if the hero is defeated
             if (currentGachaHero.getEhp() <= 0) {
-                lives[0] = false; // hero is dead
+                lives[0] = false;
                 return lives;
             }
         } else {
-            log("Attack Sequence: Villain attacks first");
-            // this block handles the scenario when the villain's speed is greater or equal
+            consoleLog(currentGachaVillain.getEname() + " attacks first due to higher speed!");
             int villainDamage = calculateDamage(currentGachaVillain.getErarity(), currentGachaVillain.getEattack() / 2, 3, currentGachaVillain.getEspeed(), currentGachaHero.getEdefense(), false);
-            currentGachaHero.setEhp(currentGachaHero.getEhp() - villainDamage);
+            currentGachaHero.setEhp(Math.max(0, currentGachaHero.getEhp() - villainDamage));
 
-            log(currentGachaVillain.getEname() + " dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
+            consoleLog(currentGachaVillain.getEname() + " dealt " + villainDamage + " damage to " + currentGachaHero.getEname());
+            consoleLog(currentGachaHero.getEname() + " HP: " + currentGachaHero.getEhp());
 
             if (currentGachaHero.getEhp() <= 0) {
                 lives[0] = false;
                 return lives;
             }
 
-            // hero attacks after the villain
             int heroDamage = calculateDamage(currentGachaHero.getErarity(), currentGachaHero.getEattack(), currentGachaHero.getEluck(), currentGachaHero.getEspeed(), currentGachaVillain.getEdefense(), true);
-            currentGachaVillain.setEhp(currentGachaVillain.getEhp() - heroDamage);
+            currentGachaVillain.setEhp(Math.max(0, currentGachaVillain.getEhp() - heroDamage));
 
-            log(currentGachaHero.getEname() + " dealt " + heroDamage + " damage to " + currentGachaVillain.getEname());
+            consoleLog(currentGachaHero.getEname() + " dealt " + heroDamage + " damage to " + currentGachaVillain.getEname());
+            consoleLog(currentGachaVillain.getEname() + " HP: " + currentGachaVillain.getEhp());
 
             if (currentGachaVillain.getEhp() <= 0) {
                 lives[1] = false;
@@ -204,7 +219,7 @@ public class GachaGameBoard {
             }
         }
 
-        return lives; // return the updated lives array
+        return lives;
     }
 
     // this method calculates the damage based on rarity, attack, luck, speed, defense, and whether the attacker is a hero
@@ -257,46 +272,106 @@ public class GachaGameBoard {
 
         CardLayout cardLayout = new CardLayout();
         JPanel mainPanel = new JPanel(cardLayout);
+        mainPanel.setBackground(BACKGROUND_COLOR);
 
-        JPanel startScreen = new JPanel();
-        startScreen.setLayout(new GridBagLayout());
+        JPanel startScreen = createStartScreen();
+        mainPanel.add(startScreen, "startScreen");
+
+        frame.add(mainPanel);
+        frame.setVisible(true);
+    }
+
+    private static JPanel createStartScreen() {
+        JPanel startScreen = new JPanel(new GridBagLayout());
+        startScreen.setBackground(BACKGROUND_COLOR);
 
         JButton buttonDrawHero = new JButton("Draw Hero");
-        startScreen.add(buttonDrawHero);
+        buttonDrawHero.setFont(new Font("Arial", Font.BOLD, 18));
+        buttonDrawHero.setBackground(ACCENT_COLOR);
+        buttonDrawHero.setForeground(Color.BLACK);
+        buttonDrawHero.setFocusPainted(false);
+        buttonDrawHero.setBorder(BorderFactory.createRaisedBevelBorder());
 
-        mainPanel.add(startScreen, "startScreen");
+        startScreen.add(buttonDrawHero);
 
         buttonDrawHero.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 executeButtonBehaviorDrawHero(gachaHeroArray, gachaPoolHero);
 
-                JPanel imageTextScreen = createImageTextScreen(cardLayout, mainPanel, gachaPoolVillain, gachaVillainArray);
-                mainPanel.add(imageTextScreen, "imageTextScreen");
+                JPanel imageTextScreen = createImageTextScreen((CardLayout) startScreen.getParent().getLayout(), (JPanel) startScreen.getParent());
+                ((JPanel) startScreen.getParent()).add(imageTextScreen, "imageTextScreen");
 
-                cardLayout.show(mainPanel, "imageTextScreen");
+                ((CardLayout) startScreen.getParent().getLayout()).show((JPanel) startScreen.getParent(), "imageTextScreen");
             }
         });
 
-        frame.add(mainPanel);
-        frame.setVisible(true);
+        return startScreen;
     }
 
-    public static JPanel createImageTextScreen(CardLayout cardLayout, JPanel mainPanel, GachaGame gachaPoolVillain, GachaVillain[] gachaVillainArray) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
+    public static JPanel createImageTextScreen(CardLayout cardLayout, JPanel mainPanel) {
+        // Ensure a hero is selected
+        if (currentGachaHero == null) {
+            currentGachaHero = gachaHeroArray[gachaPoolHero.singleDraw()];
+            log("You drew a new hero: " + currentGachaHero.getEname());
+        }
 
-        ImageIcon image = new ImageIcon("hero-sprite.png");
-        JLabel imageLabel = new JLabel(image);
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBackground(BACKGROUND_COLOR);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JLabel textLabel = new JLabel("<html>YOU HAVE DRAWN " + currentGachaHero.getEname() + " He is a " + currentGachaHero.getErarity() + "-Star" +
-            " Hero with the following stats " +
-            " HP: " + currentGachaHero.getEhp() + " ATTACK: " + currentGachaHero.getEattack() + " DEFENSE: " + currentGachaHero.getEdefense() +
-            " SPEED: " + currentGachaHero.getEspeed() + " LUCK: " + currentGachaHero.getEluck() + "</html>", SwingConstants.CENTER);
-        textLabel.setFont(new Font("Serif", Font.BOLD, 24));
+        // Hero image
+        ImageIcon originalIcon = new ImageIcon("hero-sprite.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        JLabel imageLabel = new JLabel(scaledIcon);
+        imageLabel.setBorder(BorderFactory.createLineBorder(ACCENT_COLOR, 3));
+        imageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        // Hero name and rarity
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(BACKGROUND_COLOR);
+
+        JLabel nameLabel = new JLabel(currentGachaHero.getEname());
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 28));
+        nameLabel.setForeground(TEXT_COLOR);
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        JLabel rarityLabel = new JLabel(currentGachaHero.getErarity() + "-Star Hero");
+        rarityLabel.setFont(new Font("Arial", Font.ITALIC, 20));
+        rarityLabel.setForeground(ACCENT_COLOR);
+        rarityLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        infoPanel.add(nameLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(rarityLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // Hero stats
+        String[] statNames = {"HP", "Attack", "Defense", "Speed", "Luck", "MP"};
+        int[] statValues = {
+            currentGachaHero.getEhp(),
+            currentGachaHero.getEattack(),
+            currentGachaHero.getEdefense(),
+            currentGachaHero.getEspeed(),
+            currentGachaHero.getEluck(),
+            currentGachaHero.getEmp()
+        };
+
+        for (int i = 0; i < statNames.length; i++) {
+            infoPanel.add(createStatPanel(statNames[i], statValues[i]));
+            infoPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        }
+
+        // Battle button
         JButton battleButton = new JButton("BATTLE");
-        battleButton.setFont(new Font("Serif", Font.BOLD, 20));
+        battleButton.setFont(new Font("Arial", Font.BOLD, 20));
+        battleButton.setBackground(ACCENT_COLOR);
+        battleButton.setForeground(Color.WHITE); // Changed to white for better visibility
+        battleButton.setFocusPainted(false);
+        battleButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        battleButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         battleButton.addActionListener(e -> {
             JPanel battleMenu = createBattleMenu();
@@ -304,11 +379,40 @@ public class GachaGameBoard {
             cardLayout.show(mainPanel, "battleMenu");
         });
 
-        panel.add(imageLabel, BorderLayout.CENTER);
-        panel.add(textLabel, BorderLayout.NORTH);
-        panel.add(battleButton, BorderLayout.SOUTH);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        infoPanel.add(battleButton);
+
+        // Add components to main panel
+        panel.add(imageLabel, BorderLayout.WEST);
+        panel.add(infoPanel, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private static JPanel createStatPanel(String statName, int statValue) {
+        JPanel statPanel = new JPanel(new BorderLayout(10, 0));
+        statPanel.setBackground(BACKGROUND_COLOR);
+        statPanel.setMaximumSize(new Dimension(300, 30));
+
+        JLabel nameLabel = new JLabel(statName);
+        nameLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        nameLabel.setForeground(TEXT_COLOR);
+
+        JLabel valueLabel = new JLabel(String.valueOf(statValue));
+        valueLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        valueLabel.setForeground(ACCENT_COLOR);
+
+        JProgressBar statBar = new JProgressBar(0, 100);
+        statBar.setValue(statValue);
+        statBar.setStringPainted(false);
+        statBar.setBackground(STAT_BAR_COLOR);
+        statBar.setForeground(ACCENT_COLOR);
+
+        statPanel.add(nameLabel, BorderLayout.WEST);
+        statPanel.add(statBar, BorderLayout.CENTER);
+        statPanel.add(valueLabel, BorderLayout.EAST);
+
+        return statPanel;
     }
 
     public static void executeButtonBehaviorDrawHero(GachaHero[] gachaHeroArray, GachaGame gachaPool) {
@@ -319,181 +423,297 @@ public class GachaGameBoard {
 
     public static JPanel createBattleMenu() {
         if (currentGachaVillain == null || currentGachaVillain.getEhp() <= 0) {
-            log("Battle started! Drawing a new villain...");
             currentGachaVillain = gachaVillainArray[gachaPoolVillain.singleDraw()];
-            log("Villain drawn: " + currentGachaVillain.getEname());
+            log("A new villain appears: " + currentGachaVillain.getEname());
+            showNewVillainDialog(currentGachaVillain);
         }
 
-        JPanel battleMenu = new JPanel();
-        battleMenu.setLayout(new BorderLayout());
+        JPanel battleMenu = new JPanel(new BorderLayout(20, 20));
+        battleMenu.setName("battleMenu"); // Set name for identification
+        battleMenu.setBackground(BACKGROUND_COLOR);
+        battleMenu.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(2, 2, 10, 10));
+        // Hero Panel
+        JPanel heroPanel = createCharacterPanel(currentGachaHero.getEname(), currentGachaHero.getEhp(), "hero-sprite.png");
+        battleMenu.add(heroPanel, BorderLayout.WEST);
 
-        JButton attackButton = new JButton("Attack");
-        JButton defendButton = new JButton("Defend");
-        JButton drawButton = new JButton("Draw New Hero");
-        JButton runButton = new JButton("Run");
+        // Villain Panel
+        JPanel villainPanel = createCharacterPanel(currentGachaVillain.getEname(), currentGachaVillain.getEhp(), "villain-sprite.png");
+        battleMenu.add(villainPanel, BorderLayout.EAST);
 
-        attackButton.addActionListener(e -> {
-            log("Battle Action: Attack");
-            boolean[] outcome = attackSequence();
-            showMessageDialog("You attacked " + currentGachaVillain.getEname() + "!");
-            handleBattleOutcome(outcome, battleMenu);
-        });
+        // Battle Log
+        battleLogArea = new JTextArea(10, 30);
+        battleLogArea.setEditable(false);
+        battleLogArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        battleLogArea.setBackground(new Color(240, 240, 240));
+        battleLogArea.setForeground(TEXT_COLOR);
+        JScrollPane scrollPane = new JScrollPane(battleLogArea);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Battle Log"));
+        battleMenu.add(scrollPane, BorderLayout.CENTER);
 
-        defendButton.addActionListener(e -> {
-            log("Battle Action: Defend");
-            int originalDefense = currentGachaHero.getEdefense();
-            currentGachaHero.setEdefense(originalDefense * 2);
-            showMessageDialog(currentGachaHero.getEname() + " doubled their defense for this turn!");
-            boolean[] outcome = attackSequence();
-            currentGachaHero.setEdefense(originalDefense);
-            handleBattleOutcome(outcome, battleMenu);
-        });
+        // Action Panel
+        JPanel actionPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        actionPanel.setBackground(BACKGROUND_COLOR);
 
-        drawButton.addActionListener(e -> {
-            log("Battle Action: Draw New Hero");
-            currentGachaHero = gachaHeroArray[gachaPoolHero.singleDraw()];
-            showMessageDialog("You drew a new hero: " + currentGachaHero.getEname() + "!");
-            refreshBattleMenu((CardLayout) battleMenu.getParent().getLayout(), (JPanel) battleMenu.getParent());
-        });
+        String[] actions = {"Attack", "Defend", "Draw New Hero", "Run"};
+        for (String action : actions) {
+            JButton actionButton = createActionButton(action);
+            actionPanel.add(actionButton);
+        }
 
-        runButton.addActionListener(e -> {
-            log("Battle Action: Run");
-            showMessageDialog("You successfully escaped from " + currentGachaVillain.getEname() + "!");
-            JPanel startScreen = createStartScreen();
-            JPanel parentPanel = (JPanel) battleMenu.getParent();
-            parentPanel.add(startScreen, "startScreen");
-            ((CardLayout) parentPanel.getLayout()).show(parentPanel, "startScreen");
-        });
-
-        buttonPanel.add(attackButton);
-        buttonPanel.add(defendButton);
-        buttonPanel.add(drawButton);
-        buttonPanel.add(runButton);
-
-        battleMenu.add(buttonPanel, BorderLayout.SOUTH);
-
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new BorderLayout());
-
-        ImageIcon heroImage = new ImageIcon("hero-sprite.png");
-        JLabel heroImageLabel = new JLabel(heroImage);
-
-        JLabel heroHPLabel = new JLabel(currentGachaHero.getEname() + " HP: " + currentGachaHero.getEhp());
-        heroHPLabel.setFont(new Font("Serif", Font.BOLD, 18));
-
-        leftPanel.add(heroImageLabel, BorderLayout.CENTER);
-        leftPanel.add(heroHPLabel, BorderLayout.SOUTH);
-
-        battleMenu.add(leftPanel, BorderLayout.WEST);
-
-        JPanel rightPanel = new JPanel();
-        rightPanel.setLayout(new BorderLayout());
-
-        ImageIcon villainImage = new ImageIcon("villain-sprite.png");
-        JLabel villainImageLabel = new JLabel(villainImage);
-
-        JLabel villainHPLabel = new JLabel(currentGachaVillain.getEname() + " HP: " + currentGachaVillain.getEhp());
-        villainHPLabel.setFont(new Font("Serif", Font.BOLD, 18));
-
-        rightPanel.add(villainImageLabel, BorderLayout.CENTER);
-        rightPanel.add(villainHPLabel, BorderLayout.SOUTH);
-
-        battleMenu.add(rightPanel, BorderLayout.EAST);
+        battleMenu.add(actionPanel, BorderLayout.SOUTH);
 
         return battleMenu;
     }
 
+    private static JPanel createCharacterPanel(String name, int hp, String imagePath) {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(BACKGROUND_COLOR);
+
+        ImageIcon originalIcon = new ImageIcon(imagePath);
+        Image scaledImage = originalIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        JLabel imageLabel = new JLabel(scaledIcon);
+        panel.add(imageLabel, BorderLayout.CENTER);
+
+        JLabel nameLabel = new JLabel(name, SwingConstants.CENTER);
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        nameLabel.setForeground(TEXT_COLOR);
+        panel.add(nameLabel, BorderLayout.NORTH);
+
+        JProgressBar hpBar = new JProgressBar(0, 100);
+        hpBar.setValue(hp);
+        hpBar.setStringPainted(true);
+        hpBar.setString("HP: " + hp);
+        hpBar.setForeground(ACCENT_COLOR);
+        panel.add(hpBar, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private static JButton createActionButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 16));
+        button.setBackground(ACCENT_COLOR);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createRaisedBevelBorder());
+
+        button.addActionListener(e -> {
+            switch (text) {
+                case "Attack":
+                    log(currentGachaHero.getEname() + " attacks " + currentGachaVillain.getEname() + "!");
+                    boolean[] outcome = attackSequence();
+                    handleBattleOutcome(outcome, (JPanel) button.getParent().getParent());
+                    break;
+                case "Defend":
+                    int originalDefense = currentGachaHero.getEdefense();
+                    currentGachaHero.setEdefense(originalDefense * 2);
+                    log(currentGachaHero.getEname() + " doubles their defense for this turn!");
+                    outcome = attackSequence();
+                    currentGachaHero.setEdefense(originalDefense);
+                    handleBattleOutcome(outcome, (JPanel) button.getParent().getParent());
+                    break;
+                case "Draw New Hero":
+                    currentGachaHero = gachaHeroArray[gachaPoolHero.singleDraw()];
+                    log("You drew a new hero: " + currentGachaHero.getEname());
+                    consoleLog(currentGachaHero.getEname() + " " + currentGachaHero.getErarity() + "-Star " + 
+                               currentGachaHero.getEhp() + " HP, " + currentGachaHero.getEattack() + " Attack, " + 
+                               currentGachaHero.getEdefense() + " Defense, " + currentGachaHero.getEspeed() + " Speed, " + 
+                               currentGachaHero.getEmp() + " MP, " + currentGachaHero.getEluck() + " Luck");
+                    showNewHeroDialog(currentGachaHero);
+                    refreshBattleMenu((CardLayout) button.getParent().getParent().getParent().getLayout(), (JPanel) button.getParent().getParent().getParent());
+                    break;
+                case "Run":
+                    log("You attempt to escape from " + currentGachaVillain.getEname() + "!");
+                    if (Math.random() < 0.5) {
+                        log("Escape successful!");
+                        JPanel startScreen = createStartScreen();
+                        JPanel parentPanel = (JPanel) button.getParent().getParent().getParent();
+                        parentPanel.add(startScreen, "startScreen");
+                        ((CardLayout) parentPanel.getLayout()).show(parentPanel, "startScreen");
+                    } else {
+                        log("Escape failed!");
+                        outcome = attackSequence();
+                        handleBattleOutcome(outcome, (JPanel) button.getParent().getParent());
+                    }
+                    break;
+            }
+        });
+
+        return button;
+    }
+
     private static void handleBattleOutcome(boolean[] outcome, JPanel battleMenu) {
         if (!outcome[0]) {
-            log("Battle Outcome: Hero Defeated");
-            showMessageDialog("Game Over! " + currentGachaHero.getEname() + " has been defeated.");
-            JPanel endingScreen = createEndingScreen();
-            JPanel parentPanel = (JPanel) battleMenu.getParent();
-            parentPanel.add(endingScreen, "endingScreen");
-            ((CardLayout) parentPanel.getLayout()).show(parentPanel, "endingScreen");
+            log("Game Over! " + currentGachaHero.getEname() + " has been defeated.");
+            showHeroDefeatScreen();
         } else if (!outcome[1]) {
-            log("Battle Outcome: Villain Defeated");
-            showMessageDialog("Victory! You defeated " + currentGachaVillain.getEname() + "!");
-            JPanel victoryScreen = createVictoryScreen();
-            JPanel parentPanel = (JPanel) battleMenu.getParent();
-            parentPanel.add(victoryScreen, "victoryScreen");
-            ((CardLayout) parentPanel.getLayout()).show(parentPanel, "victoryScreen");
+            log("Victory! You defeated " + currentGachaVillain.getEname() + "!");
+            showVillainDefeatScreen();
+            currentGachaVillain = null; // Reset the villain
+            refreshBattleMenu((CardLayout) battleMenu.getParent().getLayout(), (JPanel) battleMenu.getParent());
         } else {
-            log("Battle Outcome: Continuing Battle");
             refreshBattleMenu((CardLayout) battleMenu.getParent().getLayout(), (JPanel) battleMenu.getParent());
         }
     }
 
-    private static JPanel createStartScreen() {
-        JPanel startScreen = new JPanel();
-        startScreen.setLayout(new GridBagLayout());
-
-        JButton buttonDrawHero = new JButton("Draw Hero");
-        startScreen.add(buttonDrawHero);
-
-        buttonDrawHero.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                executeButtonBehaviorDrawHero(gachaHeroArray, gachaPoolHero);
-
-                JPanel imageTextScreen = createImageTextScreen(
-                    (CardLayout) startScreen.getParent().getLayout(),
-                    (JPanel) startScreen.getParent(),
-                    new GachaGame(),  // Add a new GachaGame instance
-                    new GachaVillain[0]  // Add an empty GachaVillain array or initialize it properly
-                );
-                ((JPanel) startScreen.getParent()).add(imageTextScreen, "imageTextScreen");
-
-                ((CardLayout) startScreen.getParent().getLayout()).show((JPanel) startScreen.getParent(), "imageTextScreen");
-            }
-        });
-
-        return startScreen;
-    }
-
-    private static JPanel createVictoryScreen() {
-        JPanel victoryScreen = new JPanel();
-        victoryScreen.setLayout(new BorderLayout());
-
-        JLabel victoryLabel = new JLabel("You defeated the villain!", SwingConstants.CENTER);
-        victoryLabel.setFont(new Font("Serif", Font.BOLD, 24));
-
-        JButton continueButton = new JButton("Continue");
-        continueButton.addActionListener(e -> {
-            JPanel parentPanel = (JPanel) victoryScreen.getParent();
-            JPanel startScreen = createStartScreen();
-            parentPanel.add(startScreen, "startScreen");
-            ((CardLayout) parentPanel.getLayout()).show(parentPanel, "startScreen");
-        });
-
-        victoryScreen.add(victoryLabel, BorderLayout.CENTER);
-        victoryScreen.add(continueButton, BorderLayout.SOUTH);
-
-        return victoryScreen;
-    }
-
-    // Method to refresh the battle menu
     public static void refreshBattleMenu(CardLayout cardLayout, JPanel mainPanel) {
-        JPanel battleMenu = createBattleMenu();
-        Component[] components = mainPanel.getComponents(); 
-        for (Component component : components) {
-            if (component instanceof JPanel && ((JPanel) component).getName() != null && ((JPanel) component).getName().equals("battleMenu")) { 
-                mainPanel.remove(component); 
-                break; 
-            } 
-        }
-        mainPanel.add(battleMenu, "battleMenu");
+        JPanel newBattleMenu = createBattleMenu();
+        mainPanel.add(newBattleMenu, "battleMenu");
         cardLayout.show(mainPanel, "battleMenu");
     }
 
-    // Method to create the ending screen
+    // Updated method to create a cooler ending screen
     public static JPanel createEndingScreen() {
-        JPanel endingScreen = new JPanel();
-        endingScreen.add(new JLabel("The hero is dead. Game Over."));
+        JPanel endingScreen = new JPanel(new BorderLayout());
+        endingScreen.setBackground(Color.BLACK);
+
+        JLabel gameOverLabel = new JLabel("GAME OVER");
+        gameOverLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        gameOverLabel.setForeground(Color.RED);
+        gameOverLabel.setHorizontalAlignment(JLabel.CENTER);
+        endingScreen.add(gameOverLabel, BorderLayout.CENTER);
+
+        JLabel heroDeadLabel = new JLabel(currentGachaHero.getEname() + " has fallen in battle");
+        heroDeadLabel.setFont(new Font("Arial", Font.ITALIC, 24));
+        heroDeadLabel.setForeground(Color.WHITE);
+        heroDeadLabel.setHorizontalAlignment(JLabel.CENTER);
+        endingScreen.add(heroDeadLabel, BorderLayout.SOUTH);
+
         return endingScreen;
+    }
+
+    private static void showNewHeroDialog(GachaHero hero) {
+        JPanel heroPanel = new JPanel(new BorderLayout(10, 10));
+        heroPanel.setBackground(BACKGROUND_COLOR);
+        heroPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        ImageIcon originalIcon = new ImageIcon("hero-sprite.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        JLabel imageLabel = new JLabel(scaledIcon);
+        heroPanel.add(imageLabel, BorderLayout.WEST);
+
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(BACKGROUND_COLOR);
+
+        JLabel nameLabel = new JLabel(hero.getEname());
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        nameLabel.setForeground(TEXT_COLOR);
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel rarityLabel = new JLabel(hero.getErarity() + "-Star Hero");
+        rarityLabel.setFont(new Font("Arial", Font.ITALIC, 18));
+        rarityLabel.setForeground(ACCENT_COLOR);
+        rarityLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        infoPanel.add(nameLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(rarityLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        String[] stats = {"HP", "Attack", "Defense", "Speed", "MP", "Luck"};
+        int[] values = {hero.getEhp(), hero.getEattack(), hero.getEdefense(), hero.getEspeed(), hero.getEmp(), hero.getEluck()};
+
+        for (int i = 0; i < stats.length; i++) {
+            JPanel statPanel = createStatPanel(stats[i], values[i]);
+            infoPanel.add(statPanel);
+            infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        }
+
+        heroPanel.add(infoPanel, BorderLayout.CENTER);
+
+        JOptionPane.showMessageDialog(null, heroPanel, "New Hero Drawn", JOptionPane.PLAIN_MESSAGE);
+    }
+
+    private static void showNewVillainDialog(GachaVillain villain) {
+        JPanel villainPanel = new JPanel(new BorderLayout(10, 10));
+        villainPanel.setBackground(new Color(50, 50, 50));
+        villainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        ImageIcon originalIcon = new ImageIcon("villain-sprite.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        JLabel imageLabel = new JLabel(scaledIcon);
+        villainPanel.add(imageLabel, BorderLayout.WEST);
+
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(new Color(50, 50, 50));
+
+        JLabel nameLabel = new JLabel(villain.getEname());
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        nameLabel.setForeground(Color.RED);
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel rarityLabel = new JLabel("Tier " + villain.getErarity() + " Villain");
+        rarityLabel.setFont(new Font("Arial", Font.ITALIC, 18));
+        rarityLabel.setForeground(Color.ORANGE);
+        rarityLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        infoPanel.add(nameLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(rarityLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        String[] stats = {"HP", "Attack", "Defense", "Speed"};
+        int[] values = {villain.getEhp(), villain.getEattack(), villain.getEdefense(), villain.getEspeed()};
+
+        for (int i = 0; i < stats.length; i++) {
+            JPanel statPanel = createStatPanel(stats[i], values[i]);
+            statPanel.setBackground(new Color(50, 50, 50));
+            ((JLabel)statPanel.getComponent(0)).setForeground(Color.WHITE);
+            ((JLabel)statPanel.getComponent(2)).setForeground(Color.WHITE);
+            infoPanel.add(statPanel);
+            infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        }
+
+        villainPanel.add(infoPanel, BorderLayout.CENTER);
+
+        JOptionPane.showMessageDialog(null, villainPanel, "New Villain Appears", JOptionPane.PLAIN_MESSAGE);
+    }
+
+    private static void showHeroDefeatScreen() {
+        JPanel defeatPanel = new JPanel(new BorderLayout());
+        defeatPanel.setBackground(Color.BLACK);
+
+        JLabel gameOverLabel = new JLabel("GAME OVER");
+        gameOverLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        gameOverLabel.setForeground(Color.RED);
+        gameOverLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        JLabel heroDefeatedLabel = new JLabel(currentGachaHero.getEname() + " has fallen in battle");
+        heroDefeatedLabel.setFont(new Font("Arial", Font.ITALIC, 24));
+        heroDefeatedLabel.setForeground(Color.WHITE);
+        heroDefeatedLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        defeatPanel.add(gameOverLabel, BorderLayout.CENTER);
+        defeatPanel.add(heroDefeatedLabel, BorderLayout.SOUTH);
+
+        JOptionPane.showMessageDialog(null, defeatPanel, "Hero Defeated", JOptionPane.PLAIN_MESSAGE);
+        System.exit(0); // Exit the game after hero defeat
+    }
+
+    private static void showVillainDefeatScreen() {
+        JPanel victoryPanel = new JPanel(new BorderLayout());
+        victoryPanel.setBackground(new Color(0, 100, 0)); // Dark green background
+
+        JLabel victoryLabel = new JLabel("VICTORY!");
+        victoryLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        victoryLabel.setForeground(Color.YELLOW);
+        victoryLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        JLabel villainDefeatedLabel = new JLabel(currentGachaVillain.getEname() + " has been defeated!");
+        villainDefeatedLabel.setFont(new Font("Arial", Font.ITALIC, 24));
+        villainDefeatedLabel.setForeground(Color.WHITE);
+        villainDefeatedLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        victoryPanel.add(victoryLabel, BorderLayout.CENTER);
+        victoryPanel.add(villainDefeatedLabel, BorderLayout.SOUTH);
+
+        JOptionPane.showMessageDialog(null, victoryPanel, "Villain Defeated", JOptionPane.PLAIN_MESSAGE);
     }
 
     /**
